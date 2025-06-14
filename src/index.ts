@@ -73,13 +73,11 @@ export class SafeAnalysisApp {
     console.log('Options:');
     console.log('  --days <number>      Days to analyze (default: 30)');
     console.log('  --top <number>       Top N protocols (default: 100)');
-    console.log('  --show-sql          Show Dune Analytics SQL query');
     console.log('  --help              Show this help message');
     console.log('');
     console.log('Examples:');
     console.log('  npm start                    # Default analysis');
     console.log('  npm start -- --days 7       # Analyze last 7 days');
-    console.log('  npm start -- --show-sql     # Show SQL query for Dune');
   }
 }
 
@@ -91,9 +89,6 @@ function parseCommandLineArgs(args: string[]): CommandLineArgs {
     switch (args[i]) {
       case '--help':
         options.help = true;
-        break;
-      case '--show-sql':
-        options.showSql = true;
         break;
       case '--days':
         const days = parseInt(args[++i] as string);

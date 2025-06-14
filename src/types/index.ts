@@ -8,7 +8,6 @@ export interface AnalysisOptions {
 export interface CommandLineArgs {
   days?: number;
   topCount?: number;
-  showSql?: boolean;
   help?: boolean;
 }
 
