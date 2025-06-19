@@ -1,4 +1,4 @@
-import { Abi, decodeFunctionData, getAbiItem, hexToBytes, parseAbi, type AbiFunction, type Hex } from 'viem';
+import { Abi, decodeFunctionData, getAbiItem, hexToBytes, parseAbi, bytesToBigInt, bytesToNumber, bytesToHex, type AbiFunction, type Hex } from 'viem';
 import type { DuneTransaction, MultiSendTransaction, ParsedTransaction } from './types/index';
 
 const COMMON_ERC20_TRANSFER_SIGNATURE: Record<string, string> = {
@@ -17,38 +17,38 @@ const COMMON_ERC20_TRANSFER_SIGNATURE: Record<string, string> = {
 };
 
 export class ParseTransaction {
+  private readonly abiCache = new Map<string, Abi>();
+  private readonly multisendAbi: Abi;
+
   constructor() {
+    // Pre-parse commonly used ABIs
+    this.multisendAbi = parseAbi([
+      'function multiSend(bytes memory transactions) public payable',
+    ]);
   }
 
-  async decodeSafeTransaction(rawData: DuneTransaction[]): Promise<ParsedTransaction[]> {
-    // const safeAbi = parseAbi([
-    //   'function execTransaction(address to, uint256 value, bytes calldata data, uint8 operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address refundReceiver, bytes memory signatures) external payable returns (bool success)'
-    // ]);
-
-    // const decoded = decodeFunctionData({
-    //   abi: safeAbi,
-    //   data
-    // });
-
-    let result: ParsedTransaction[] = [];
+  decodeSafeTransaction(rawData: DuneTransaction[]): ParsedTransaction[] {
+    // Input validation
+    if (!Array.isArray(rawData) || rawData.length === 0) {
+      return [];
+    }
 
     try {
-      for (const tx of rawData) {
+      return rawData.reduce((result: ParsedTransaction[], tx) => {
         const { to, data, operation, safeTxGas, value } = tx;
+        
         if (operation === 0) {
           result.push({
             to: to.toLowerCase(),
             gas: safeTxGas,
             value
-          })
-
-          continue;
+          });
+        } else {
+          result.push(...this.decodeMultiSend(data));
         }
-
-        result = result.concat(this.decodeMultiSend(data));
-      }
-
-      return result;
+        
+        return result;
+      }, []);
     } catch (error) {
       throw new Error(`Failed to decode Safe transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -58,13 +58,9 @@ export class ParseTransaction {
    * Decode multiSend transactions
    */
   private decodeMultiSend(data: Hex): ParsedTransaction[] {
-    const multisendAbi = parseAbi([
-      'function multiSend(bytes memory transactions) public payable',
-    ]);
-
     try {
       const decoded = decodeFunctionData({
-        abi: multisendAbi,
+        abi: this.multisendAbi,
         data
       });
 
@@ -73,7 +69,7 @@ export class ParseTransaction {
       }
 
       // Extract transactions from multi-send hex data
-      const transactionsData = this.parseMultiSendTransactions(decoded.args[0] as Hex);
+      const transactionsData = this.parseMultiSendTransactions(decoded.args?.[0] as Hex || '0x');
 
       // Decode each transactions in details to get final destination address
       /*
@@ -133,7 +129,7 @@ export class ParseTransaction {
     }
 
     return {
-      to: (args?.['to']).toString().toLowerCase(),
+      to: (args?.['to']?.toString() || tx.to).toLowerCase(),
       gas: 0,
       value: args?.['amount']
     }
@@ -173,13 +169,21 @@ export class ParseTransaction {
   }
 
   /**
-   * Get common function ABIs by selector
+   * Get common function ABIs by selector with caching
    */
   private getCommonFunctionAbi(selector: Hex): Abi | undefined {
+    // Check cache first
+    if (this.abiCache.has(selector)) {
+      return this.abiCache.get(selector);
+    }
+
     const signature = COMMON_ERC20_TRANSFER_SIGNATURE[selector];
     if (signature) {
       try {
-        return parseAbi([signature]);
+        const abi = parseAbi([signature]);
+        // Cache the parsed ABI
+        this.abiCache.set(selector, abi);
+        return abi;
       } catch {
         return undefined;
       }
@@ -206,25 +210,25 @@ export class ParseTransaction {
         // Read to address (20 bytes)
         if (offset + 20 > dataBytes.length) break;
         const toBytes = dataBytes.slice(offset, offset + 20);
-        const to = `0x${Array.from(toBytes).map(b => b.toString(16).padStart(2, '0')).join('')}`;
+        const to = bytesToHex(toBytes);
         offset += 20;
 
         // Read value (32 bytes)
         if (offset + 32 > dataBytes.length) break;
         const valueBytes = dataBytes.slice(offset, offset + 32);
-        const value = this.bytesToBigInt(valueBytes);
+        const value = bytesToBigInt(valueBytes);
         offset += 32;
 
         // Read data length (32 bytes)
         if (offset + 32 > dataBytes.length) break;
         const dataLengthBytes = dataBytes.slice(offset, offset + 32);
-        const dataLength = this.bytesToNumber(dataLengthBytes);
+        const dataLength = bytesToNumber(dataLengthBytes);
         offset += 32;
 
         // Read data (dataLength bytes)
         if (offset + dataLength > dataBytes.length) break;
         const callDataBytes = dataBytes.slice(offset, offset + dataLength);
-        const callData = `0x${Array.from(callDataBytes).map(b => b.toString(16).padStart(2, '0')).join('')}` as Hex;
+        const callData = bytesToHex(callDataBytes) as Hex;
         offset += dataLength;
 
         transactions.push({
@@ -243,27 +247,5 @@ export class ParseTransaction {
     }
 
     return transactions;
-  }
-
-  /**
-   * Converts bytes array to BigInt (big-endian)
-   */
-  private bytesToBigInt(bytes: Uint8Array): bigint {
-    let result = 0n;
-    for (let i = 0; i < bytes.length; i++) {
-      result = (result << 8n) + BigInt(bytes[i] as number);
-    }
-    return result;
-  }
-
-  /**
-   * Converts bytes array to number (big-endian)
-   */
-  private bytesToNumber(bytes: Uint8Array): number {
-    let result = 0;
-    for (let i = 0; i < bytes.length; i++) {
-      result = (result << 8) + (bytes[i] as number);
-    }
-    return result;
   }
 }

@@ -30,45 +30,43 @@ interface ExportData {
 export class AnalyzeSafe {
   private readonly duneQuery: DuneAnalytics;
   private outputDir: string;
-  private dictionary: Map<string, string>;
+  private dictionary: Record<string, string>;
 
   constructor(outputDir: string) {
     this.duneQuery = new DuneAnalytics();
-    this.dictionary = new Map<string, string>();
+    this.dictionary = {};
     this.outputDir = outputDir;
   }
 
-  async loadDictionary() {
+  async loadDictionary(): Promise<void> {
     const filepath = path.join(this.outputDir, 'dictionary.json');
 
     try {
       // Check if file exists
       await fs.access(filepath);
       
-      // File exists - load data from file to map variable and exit function
-      console.log(`Loading to cache...`);
+      // File exists - load data from file
+      console.log(`Loading dictionary from cache...`);
       
       const fileContent = await fs.readFile(filepath, 'utf-8');
-      const jsonData = JSON.parse(fileContent);
+      this.dictionary = JSON.parse(fileContent);
       
-      // Convert JSON object back to Map
-      this.dictionary = new Map<string, string>(Object.entries(jsonData));
-      console.log(`Loaded ${this.dictionary.size} entries from dictionary`);
+      console.log(`Loaded ${Object.keys(this.dictionary).length} entries from dictionary`);
     } catch (error) {
       // File doesn't exist - get data from Dune API
-      console.log(`Dictionary is not existing, fetching from Dune API...`);
+      console.log(`Dictionary not found, fetching from Dune API...`);
 
-      this.dictionary = await this.duneQuery.getContractNames(config.duneLabels)      
+      this.dictionary = await this.duneQuery.getContractNames(config.duneLabels);
 
-      // Create map from API data and save to file
+      // Save to file
       await this.saveDictionaryToFile(filepath);
       
-      console.log(`Fetched and saved ${this.dictionary.size} entries`);
+      console.log(`Fetched and saved ${Object.keys(this.dictionary).length} entries`);
     }
   }
 
-    /**
-   * Helper method to save dictionary Map to file as JSON
+  /**
+   * Helper method to save dictionary to file as JSON
    */
   private async saveDictionaryToFile(filePath: string): Promise<void> {
     try {
@@ -76,13 +74,10 @@ export class AnalyzeSafe {
       const dir = path.dirname(filePath);
       await fs.mkdir(dir, { recursive: true });
       
-      // Convert Map to plain object for JSON serialization
-      const jsonObject = Object.fromEntries(this.dictionary);
-      
       // Save to file with pretty formatting
-      await fs.writeFile(filePath, JSON.stringify(jsonObject, null, 2), 'utf-8');
+      await fs.writeFile(filePath, JSON.stringify(this.dictionary, null, 2), 'utf-8');
       
-      console.log(`Dictionary saved to`);
+      console.log(`Dictionary saved to ${filePath}`);
     } catch (error) {
       console.error(`Error saving dictionary to file: ${error}`);
       throw error;
@@ -92,32 +87,42 @@ export class AnalyzeSafe {
   async handle(
     data: ParsedTransaction[], 
     options: AnalysisOptions, 
-  ) {
+  ): Promise<Record<string, ProtocolAnalysis>> {
     const { days, topCount } = options;
 
-    const result = data.reduce((acc, { to, gas }) => {
-      const existProtocol = acc.get(to);
-      let contractName = '';
-      if (config.analyzeWithLabel) {
-        contractName = this.dictionary.get(to) ?? '';
+    // Input validation
+    if (!Array.isArray(data) || data.length === 0) {
+      console.warn('No transaction data provided for analysis');
+      return {};
+    }
+
+    if (topCount <= 0) {
+      throw new Error('topCount must be greater than 0');
+    }
+
+    // Pre-allocate result object for better performance
+    const result: Record<string, ProtocolAnalysis> = {};
+    const dictionary = this.dictionary;
+
+    // Process transactions in a single pass
+    for (const { to, gas } of data) {
+      const normalizedTo = to.toLowerCase();
+      const existing = result[normalizedTo];
+      
+      if (existing) {
+        existing.interactions++;
+        existing.gas += Number(gas);
+      } else {
+        result[normalizedTo] = {
+          interactions: 1,
+          gas: Number(gas),
+          name: config.analyzeWithLabel ? (dictionary[normalizedTo] ?? '') : ''
+        };
       }
-
-      if (!existProtocol) {
-        acc.set(to, { interactions: 1, gas: Number(gas), name: contractName })
-        return acc;
-      }
-
-      acc.set(to, { 
-        interactions: existProtocol.interactions + 1, 
-        gas: existProtocol.gas + Number(gas),
-        name: contractName
-      });
-
-      return acc;
-    }, new Map<string, ProtocolAnalysis>());
+    }
 
     // Sort & Limit with interaction count
-    const topProtocols = [...result.entries()]
+    const topProtocols = Object.entries(result)
       .sort((a, b) => b[1].interactions - a[1].interactions)
       .slice(0, topCount);
 
@@ -165,14 +170,24 @@ export class AnalyzeSafe {
     console.log(`📄 Results exported to: ${filepath}`);
   }
 
-  private generateSummary(data: [string ,ProtocolAnalysis][]): void {
-    const totalTransactions = data.reduce((sum, p) => sum + p[1].interactions, 0);
-    const totalGas = data.reduce((sum, p) => sum + p[1].gas, 0);
+  private generateSummary(data: [string, ProtocolAnalysis][]): void {
+    if (data.length === 0) {
+      console.log('\n📈 No protocols found for analysis');
+      return;
+    }
+
+    // Use reduce for better performance
+    const totals = data.reduce((acc, [, protocol]) => {
+      acc.transactions += protocol.interactions;
+      acc.gas += protocol.gas;
+      return acc;
+    }, { transactions: 0, gas: 0 });
 
     console.log('\n📈 TOP PROTOCOLS ANALYSIS SUMMARY');
     console.log('═'.repeat(50));
-    console.log(`📊 Total Transactions: ${totalTransactions.toLocaleString()}`);
-    console.log(`⛽ Total Gas Used (Wei): ${totalGas.toLocaleString()}`);
+    console.log(`📊 Total Transactions: ${totals.transactions.toLocaleString()}`);
+    console.log(`⛽ Total Gas Used (Wei): ${totals.gas.toLocaleString()}`);
+    console.log(`🏆 Protocols Analyzed: ${data.length}`);
   }
 
   // private weiToEth(weiString: number): number {

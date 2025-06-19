@@ -9,13 +9,12 @@ import {
 } from './types';
 
 export class SafeAnalysisApp {
-  private analyze: AnalyzeSafe;
-  private duneAnalytics: DuneAnalytics;
-  private outputDir: string;
+  private readonly analyze: AnalyzeSafe;
+  private readonly duneAnalytics: DuneAnalytics;
+  private readonly outputDir: string;
 
   constructor() {
     this.outputDir = path.join(__dirname, '..', config.outputDir);
-
     this.analyze = new AnalyzeSafe(this.outputDir);
     this.duneAnalytics = new DuneAnalytics();
   }
@@ -30,7 +29,19 @@ export class SafeAnalysisApp {
   }
 
   async runAnalysis(options: AnalysisOptions): Promise<void> {
+    const startTime = Date.now();
+    const startMemory = process.memoryUsage();
+    
     const { days, topCount } = options;
+
+    // Input validation
+    if (days <= 0 || days > 365) {
+      throw new Error('Days must be between 1 and 365');
+    }
+
+    if (topCount <= 0 || topCount > 10000) {
+      throw new Error('Top count must be between 1 and 10000');
+    }
 
     console.log('🔍 Starting Safe Wallet Protocol Analysis...');
     console.log(`📅 Analyzing last ${days} days`);
@@ -38,20 +49,32 @@ export class SafeAnalysisApp {
     console.log('─'.repeat(50));
 
     try {
-      console.log(config.analyzeWithLabel);
       if (config.analyzeWithLabel) {
-        // Get Top protocols with contract label
-        // NOT RECOMMEND: Wastes huge amount of credits and memory
         console.log('📊 Loading contract labels...');
         await this.analyze.loadDictionary();
       }
 
       console.log('📊 Fetching Safe wallet interaction data...');
       const data = await this.duneAnalytics.getSafeTransactions(config.duneTransaction);
-      console.log(`✅ Found ${data.length} transactions with Safe wallet interactions \n`);
+      
+      if (!data || data.length === 0) {
+        console.log('⚠️  No transaction data found for the specified period');
+        return;
+      }
+      
+      console.log(`✅ Found ${data.length.toLocaleString()} transactions with Safe wallet interactions \n`);
 
       await this.analyze.handle(data, options);
+      
+      // Performance metrics
+      const endTime = Date.now();
+      const endMemory = process.memoryUsage();
+      const processingTime = endTime - startTime;
+      const memoryUsed = endMemory.heapUsed - startMemory.heapUsed;
+      
       console.log('\n🎉 Analysis completed successfully!');
+      console.log(`⏱️  Processing time: ${processingTime}ms`);
+      console.log(`💾 Memory used: ${(memoryUsed / 1024 / 1024).toFixed(2)}MB`);
 
     } catch (error) {
       const err = error as Error;
@@ -86,17 +109,38 @@ function parseCommandLineArgs(args: string[]): CommandLineArgs {
   const options: CommandLineArgs = {};
   
   for (let i = 0; i < args.length; i++) {
-    switch (args[i]) {
+    const arg = args[i];
+    
+    if (!arg) continue;
+    
+    switch (arg) {
       case '--help':
         options.help = true;
         break;
       case '--days':
+        if (i + 1 >= args.length) {
+          throw new Error('--days requires a value');
+        }
         const days = parseInt(args[++i] as string);
-        if (!isNaN(days)) options.days = days;
+        if (isNaN(days) || days <= 0) {
+          throw new Error('--days must be a positive number');
+        }
+        options.days = days;
         break;
       case '--top':
+        if (i + 1 >= args.length) {
+          throw new Error('--top requires a value');
+        }
         const topCount = parseInt(args[++i] as string);
-        if (!isNaN(topCount)) options.topCount = topCount;
+        if (isNaN(topCount) || topCount <= 0) {
+          throw new Error('--top must be a positive number');
+        }
+        options.topCount = topCount;
+        break;
+      default:
+        if (arg.startsWith('--')) {
+          throw new Error(`Unknown option: ${arg}`);
+        }
         break;
     }
   }

@@ -45,8 +45,8 @@ export class DuneAnalytics {
     }
   }
 
-  async getContractNames(queryId: number) {
-    let result: Map<string, string> = new Map<string, string>()
+  async getContractNames(queryId: number): Promise<Record<string, string>> {
+    const result: Record<string, string> = {};
     const perPage = config.dataPerQuery;
     let currentPage = 1;
     let hasMoreData = true;
@@ -54,16 +54,15 @@ export class DuneAnalytics {
     try {
       // while (hasMoreData) {
         const data = await this.pollForResults<ContractLabel>(queryId, perPage, (currentPage - 1) * perPage);
-        data.reduce((map, item) => {
-          map.set(item.address.toLowerCase(), item.namespace);
-          return map;
-        }, result);
+        data.forEach(item => {
+          result[item.address.toLowerCase()] = item.namespace;
+        });
 
         hasMoreData = data.length >= perPage;
         currentPage ++;
       // }
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error('Error fetching contract names:', error);
       throw error;
     }
 
@@ -74,29 +73,41 @@ export class DuneAnalytics {
     queryId: number, 
     parameters: Record<string, any> = {}
   ): Promise<ParsedTransaction[]> {
-    let result: ParsedTransaction[] = [];
+    // Input validation
+    if (queryId <= 0) {
+      throw new Error('Query ID must be greater than 0');
+    }
+
     const perPage = config.dataPerQuery;
     let currentPage = 1;
     let hasMoreData = true;
+    const allPages: ParsedTransaction[][] = [];
 
     try {
       // const executionId = await this.executeQuery(queryId/*, parameters*/);
 
-      // while (hasMoreData) {
+      while (hasMoreData) {
         const data = await this.pollForResults<DuneTransaction>(queryId, perPage, (currentPage - 1) * perPage);
 
-        const parsedResults = await this.parseTx.decodeSafeTransaction(data);
-        result = result.concat(parsedResults);
+        // Early exit if no data returned
+        if (!data || data.length === 0) {
+          hasMoreData = false;
+          break;
+        }
+
+        const parsedResults = this.parseTx.decodeSafeTransaction(data);
+        allPages.push(parsedResults);
 
         hasMoreData = data.length >= perPage;
-        currentPage ++;
-      // }
+        currentPage++;
+      }
     } catch (error) {
       console.error('Error fetching transactions:', error);
       throw error;
     }
 
-    return result;
+    // Use flat instead of reduce for better performance
+    return allPages.flat();
   }
 
   private async executeQuery(
@@ -165,12 +176,23 @@ export class DuneAnalytics {
         }
 
         console.log(`Query still running... (attempt ${attempt + 1}/${maxAttempts})`);
-        await this.sleep(config.retryDelay);
+        
+        // Exponential backoff: base delay * 2^attempt, with jitter
+        const baseDelay = config.retryDelay;
+        const exponentialDelay = baseDelay * Math.pow(2, attempt);
+        const jitter = Math.random() * 0.1 * exponentialDelay; // 10% jitter
+        const delay = Math.min(exponentialDelay + jitter, 30000); // Cap at 30 seconds
+        
+        console.log(`Waiting ${Math.round(delay)}ms before next attempt...`);
+        await this.sleep(delay);
       } catch (error) {
         const axiosError = error as AxiosError;
         if (axiosError.response?.status === 429) {
           console.log('Rate limited, waiting longer...');
-          await this.sleep(5000);
+          // Exponential backoff for rate limiting: 5s * 2^attempt
+          const rateLimitDelay = Math.min(5000 * Math.pow(2, attempt), 60000); // Cap at 60 seconds
+          console.log(`Rate limited, waiting ${Math.round(rateLimitDelay)}ms...`);
+          await this.sleep(rateLimitDelay);
           continue;
         }
         throw error;

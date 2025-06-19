@@ -34,3 +34,16 @@ export interface DuneTransaction {
   data: Hex;
   operation: number;
 }
+
+// Validation interfaces
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+// Performance metrics
+export interface PerformanceMetrics {
+  processingTime: number;
+  memoryUsage: number;
+  transactionCount: number;
+}
