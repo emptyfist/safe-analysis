@@ -3,10 +3,10 @@ import * as path from 'path';
 import { AnalyzeSafe } from './analyze-safe';
 import { DuneAnalytics } from './dune-query';
 import config from './config';
-import { 
-  AnalysisOptions, 
-  CommandLineArgs,
-} from './types';
+
+type CommandLineArgs = {
+  help?: boolean;
+}
 
 export class SafeAnalysisApp {
   private readonly analyze: AnalyzeSafe;
@@ -28,24 +28,13 @@ export class SafeAnalysisApp {
     }
   }
 
-  async runAnalysis(options: AnalysisOptions): Promise<void> {
+  async runAnalysis(): Promise<void> {
     const startTime = Date.now();
     const startMemory = process.memoryUsage();
     
-    const { days, topCount } = options;
-
-    // Input validation
-    if (days <= 0 || days > 365) {
-      throw new Error('Days must be between 1 and 365');
-    }
-
-    if (topCount <= 0 || topCount > 10000) {
-      throw new Error('Top count must be between 1 and 10000');
-    }
-
     console.log('🔍 Starting Safe Wallet Protocol Analysis...');
-    console.log(`📅 Analyzing last ${days} days`);
-    console.log(`🔢 Top ${topCount} protocols`);
+    console.log(`📅 Analyzing last ${config.defaultDays} days`);
+    console.log(`🔢 Top ${config.defaultTopCount} protocols`);
     console.log('─'.repeat(50));
 
     try {
@@ -54,17 +43,15 @@ export class SafeAnalysisApp {
         await this.analyze.loadDictionary();
       }
 
-      console.log('📊 Fetching Safe wallet interaction data...');
-      const data = await this.duneAnalytics.getSafeTransactions(config.duneTransaction);
-      
-      if (!data || data.length === 0) {
-        console.log('⚠️  No transaction data found for the specified period');
-        return;
-      }
-      
-      console.log(`✅ Found ${data.length.toLocaleString()} transactions with Safe wallet interactions \n`);
+      console.log('📊 Fetching statistical(non multi-send Safe wallet transactions) data...');
+      const statistics = await this.duneAnalytics.getStatistics(config.duneQueryIdForStatistics);
+      console.log(`✅ Found ${statistics.length.toLocaleString()} statistical data`);
 
-      await this.analyze.handle(data, options);
+      console.log('📊 Fetching multi-send Safe wallet transactions...');
+      const interactAddresses = await this.duneAnalytics.getSafeTransactions(config.duneQueryIdForTransactions);
+      console.log(`✅ Found ${interactAddresses.length.toLocaleString()} interacted addresses \n`);
+
+      await this.analyze.handle(statistics, interactAddresses);
       
       // Performance metrics
       const endTime = Date.now();
@@ -94,13 +81,7 @@ export class SafeAnalysisApp {
     console.log('Usage: npm start [options]');
     console.log('');
     console.log('Options:');
-    console.log('  --days <number>      Days to analyze (default: 30)');
-    console.log('  --top <number>       Top N protocols (default: 100)');
-    console.log('  --help              Show this help message');
-    console.log('');
-    console.log('Examples:');
-    console.log('  npm start                    # Default analysis');
-    console.log('  npm start -- --days 7       # Analyze last 7 days');
+    console.log('  --help   Show this help message');
   }
 }
 
@@ -116,26 +97,6 @@ function parseCommandLineArgs(args: string[]): CommandLineArgs {
     switch (arg) {
       case '--help':
         options.help = true;
-        break;
-      case '--days':
-        if (i + 1 >= args.length) {
-          throw new Error('--days requires a value');
-        }
-        const days = parseInt(args[++i] as string);
-        if (isNaN(days) || days <= 0) {
-          throw new Error('--days must be a positive number');
-        }
-        options.days = days;
-        break;
-      case '--top':
-        if (i + 1 >= args.length) {
-          throw new Error('--top requires a value');
-        }
-        const topCount = parseInt(args[++i] as string);
-        if (isNaN(topCount) || topCount <= 0) {
-          throw new Error('--top must be a positive number');
-        }
-        options.topCount = topCount;
         break;
       default:
         if (arg.startsWith('--')) {
@@ -154,17 +115,14 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const options = parseCommandLineArgs(args);
   
-  if (options.help) {
+  if (options?.help) {
     app.printUsage();
     return;
   }
   
   try {
     await app.init();
-    await app.runAnalysis({
-      days: options.days ?? config.defaultDays,
-      topCount: options.topCount ??  config.defaultTopCount
-    });
+    await app.runAnalysis();
   } catch (error) {
     const err = error as Error;
     console.error('💥 Application failed:', err.message);

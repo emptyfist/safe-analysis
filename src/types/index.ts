@@ -1,20 +1,15 @@
 import { type Hex } from 'viem';
 
-export interface AnalysisOptions {
-  days: number;
-  topCount: number;
-}
-
-export interface CommandLineArgs {
-  days?: number;
-  topCount?: number;
-  help?: boolean;
-}
-
 export interface ParsedTransaction {
   to: string;
   gas: number;
   value: number;
+}
+
+export type AnalyzedTransaction = {
+  namespace: string;
+  tx_count: number;
+  total_gas: number;
 }
 
 // Types for MultiSend transaction structure
@@ -26,13 +21,10 @@ export interface MultiSendTransaction {
   dataLength: number;
 }
 
-export interface DuneTransaction {
+export interface DuneMultiSendTransaction {
   to: string;
-  baseGas: number;
   safeTxGas: number;
-  value: number;
   data: Hex;
-  operation: number;
 }
 
 // Validation interfaces

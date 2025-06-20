@@ -1,6 +1,9 @@
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import config from './config';
-import { DuneTransaction, ParsedTransaction } from './types';
+import type { 
+  AnalyzedTransaction, 
+  DuneMultiSendTransaction, 
+} from './types';
 import { ParseTransaction } from './parse-tx';
 
 type ContractLabel = {
@@ -9,10 +12,10 @@ type ContractLabel = {
   namespace: string;
 }
 
-type DuneExecuteResponse = {
-  execution_id: string;
-  state: string;
-}
+// type DuneExecuteResponse = {
+//   execution_id: string;
+//   state: string;
+// }
 
 type DuneResultsResponse<T> = {
   execution_id: string;
@@ -69,25 +72,31 @@ export class DuneAnalytics {
     return result;
   }
 
-  async getSafeTransactions(
-    queryId: number, 
-    parameters: Record<string, any> = {}
-  ): Promise<ParsedTransaction[]> {
+  async getStatistics(queryId: number): Promise<AnalyzedTransaction[]> {
     // Input validation
-    if (queryId <= 0) {
-      throw new Error('Query ID must be greater than 0');
-    }
+    if (queryId <= 0) return [];
 
+    return await this.getPaginatedData<AnalyzedTransaction>(queryId);
+  }
+
+  async getSafeTransactions(queryId: number): Promise<string[]> {
+    // Input validation
+    if (queryId <= 0) return [];
+
+    const data = await this.getPaginatedData<DuneMultiSendTransaction>(queryId);
+
+    return this.parseTx.decodeSafeTransaction(data);
+  }
+
+  private async getPaginatedData<T>(queryId: number): Promise<T[]> {
     const perPage = config.dataPerQuery;
     let currentPage = 1;
     let hasMoreData = true;
-    const allPages: ParsedTransaction[][] = [];
+    const allPages: T[][] = [];
 
     try {
-      // const executionId = await this.executeQuery(queryId/*, parameters*/);
-
       while (hasMoreData) {
-        const data = await this.pollForResults<DuneTransaction>(queryId, perPage, (currentPage - 1) * perPage);
+        const data = await this.pollForResults<T>(queryId, perPage, (currentPage - 1) * perPage);
 
         // Early exit if no data returned
         if (!data || data.length === 0) {
@@ -95,8 +104,7 @@ export class DuneAnalytics {
           break;
         }
 
-        const parsedResults = this.parseTx.decodeSafeTransaction(data);
-        allPages.push(parsedResults);
+        allPages.push(data);
 
         hasMoreData = data.length >= perPage;
         currentPage++;
@@ -110,36 +118,36 @@ export class DuneAnalytics {
     return allPages.flat();
   }
 
-  private async executeQuery(
-    queryId: number, 
-    parameters: Record<string, any> = {}
-  ): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('Dune API key not configured');
-    }
+  // private async executeQuery(
+  //   queryId: number, 
+  //   parameters: Record<string, any> = {}
+  // ): Promise<string> {
+  //   if (!this.apiKey) {
+  //     throw new Error('Dune API key not configured');
+  //   }
 
-    try {
-      console.log(`Executing Dune query ${queryId}...`);
+  //   try {
+  //     console.log(`Executing Dune query ${queryId}...`);
       
-      const executeResponse: AxiosResponse<DuneExecuteResponse> = await axios.post(
-        `${this.baseUrl}/query/${queryId}/execute`,
-        { query_parameters: parameters },
-        {
-          headers: {
-            'X-Dune-API-Key': this.apiKey,
-            'Content-Type': 'application/json'
-          },
-          timeout: this.timeout
-        }
-      );
+  //     const executeResponse: AxiosResponse<DuneExecuteResponse> = await axios.post(
+  //       `${this.baseUrl}/query/${queryId}/execute`,
+  //       { query_parameters: parameters },
+  //       {
+  //         headers: {
+  //           'X-Dune-API-Key': this.apiKey,
+  //           'Content-Type': 'application/json'
+  //         },
+  //         timeout: this.timeout
+  //       }
+  //     );
 
-      return executeResponse.data.execution_id;
-    } catch (error) {
-      const axiosError = error as AxiosError;
-      console.error('Dune query execution failed:', axiosError.response?.data || axiosError.message);
-      throw error;
-    }
-  }
+  //     return executeResponse.data.execution_id;
+  //   } catch (error) {
+  //     const axiosError = error as AxiosError;
+  //     console.error('Dune query execution failed:', axiosError.response?.data || axiosError.message);
+  //     throw error;
+  //   }
+  // }
 
   private async pollForResults<T>(
     // executionId: string, 
