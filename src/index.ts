@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { AnalyzeSafe } from './analyze-safe';
-import { DuneAnalytics } from './dune-query';
-import config from './config';
+import { AnalyzeSafe } from '@/analyze-safe';
+import { DuneAnalytics } from '@/dune-query';
+import config from '@/config';
 
 type CommandLineArgs = {
   help?: boolean;
@@ -31,7 +31,6 @@ export class SafeAnalysisApp {
   async runAnalysis(): Promise<void> {
     const startTime = Date.now();
     const startMemory = process.memoryUsage();
-    
     console.log('🔍 Starting Safe Wallet Protocol Analysis...');
     console.log(`📅 Analyzing last ${config.defaultDays} days`);
     console.log(`🔢 Top ${config.defaultTopCount} protocols`);
@@ -52,13 +51,11 @@ export class SafeAnalysisApp {
       console.log(`✅ Found ${interactAddresses.length.toLocaleString()} interacted addresses \n`);
 
       await this.analyze.handle(statistics, interactAddresses);
-      
       // Performance metrics
       const endTime = Date.now();
       const endMemory = process.memoryUsage();
       const processingTime = endTime - startTime;
       const memoryUsed = endMemory.heapUsed - startMemory.heapUsed;
-      
       console.log('\n🎉 Analysis completed successfully!');
       console.log(`⏱️  Processing time: ${processingTime}ms`);
       console.log(`💾 Memory used: ${(memoryUsed / 1024 / 1024).toFixed(2)}MB`);
@@ -66,11 +63,9 @@ export class SafeAnalysisApp {
     } catch (error) {
       const err = error as Error;
       console.error('❌ Analysis failed:', err.message);
-      
       if (err.message.includes('API key')) {
         console.log('\n💡 Make sure to set your DUNE_API_KEY in your environment variables or config file');
       }
-      
       process.exit(1);
     }
   }
@@ -88,24 +83,20 @@ export class SafeAnalysisApp {
 // Command line argument parsing
 function parseCommandLineArgs(args: string[]): CommandLineArgs {
   const options: CommandLineArgs = {};
-  
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
     if (!arg) continue;
-    
     switch (arg) {
-      case '--help':
-        options.help = true;
-        break;
-      default:
-        if (arg.startsWith('--')) {
-          throw new Error(`Unknown option: ${arg}`);
-        }
-        break;
+    case '--help':
+      options.help = true;
+      break;
+    default:
+      if (arg.startsWith('--')) {
+        throw new Error(`Unknown option: ${arg}`);
+      }
+      break;
     }
   }
-  
   return options;
 }
 
@@ -114,12 +105,10 @@ async function main(): Promise<void> {
   const app = new SafeAnalysisApp();
   const args = process.argv.slice(2);
   const options = parseCommandLineArgs(args);
-  
   if (options?.help) {
     app.printUsage();
     return;
   }
-  
   try {
     await app.init();
     await app.runAnalysis();
@@ -131,6 +120,7 @@ async function main(): Promise<void> {
 }
 
 // Error handling
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 process.on('unhandledRejection', (reason: unknown, promise: Promise<any>) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);

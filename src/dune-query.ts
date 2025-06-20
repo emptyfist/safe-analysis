@@ -1,10 +1,10 @@
 import axios, { AxiosResponse, AxiosError } from 'axios';
-import config from './config';
-import type { 
-  AnalyzedTransaction, 
-  DuneMultiSendTransaction, 
-} from './types';
-import { ParseTransaction } from './parse-tx';
+import config from '@/config';
+import type {
+  AnalyzedTransaction,
+  DuneMultiSendTransaction,
+} from '@/types';
+import { ParseTransaction } from '@/parse-tx';
 
 type ContractLabel = {
   address: string;
@@ -42,10 +42,6 @@ export class DuneAnalytics {
     this.baseUrl = 'https://api.dune.com/api/v1';
     this.timeout = config.apiTimeout;
     this.parseTx = new ParseTransaction();
-    
-    if (!this.apiKey) {
-      console.warn('Warning: Dune API key not configured. Using mock data.');
-    }
   }
 
   async getContractNames(queryId: number): Promise<Record<string, string>> {
@@ -55,15 +51,15 @@ export class DuneAnalytics {
     let hasMoreData = true;
 
     try {
-      // while (hasMoreData) {
+      while (hasMoreData) {
         const data = await this.pollForResults<ContractLabel>(queryId, perPage, (currentPage - 1) * perPage);
         data.forEach(item => {
           result[item.address.toLowerCase()] = item.namespace;
         });
 
         hasMoreData = data.length >= perPage;
-        currentPage ++;
-      // }
+        currentPage += 1;
+      }
     } catch (error) {
       console.error('Error fetching contract names:', error);
       throw error;
@@ -118,43 +114,11 @@ export class DuneAnalytics {
     return allPages.flat();
   }
 
-  // private async executeQuery(
-  //   queryId: number, 
-  //   parameters: Record<string, any> = {}
-  // ): Promise<string> {
-  //   if (!this.apiKey) {
-  //     throw new Error('Dune API key not configured');
-  //   }
-
-  //   try {
-  //     console.log(`Executing Dune query ${queryId}...`);
-      
-  //     const executeResponse: AxiosResponse<DuneExecuteResponse> = await axios.post(
-  //       `${this.baseUrl}/query/${queryId}/execute`,
-  //       { query_parameters: parameters },
-  //       {
-  //         headers: {
-  //           'X-Dune-API-Key': this.apiKey,
-  //           'Content-Type': 'application/json'
-  //         },
-  //         timeout: this.timeout
-  //       }
-  //     );
-
-  //     return executeResponse.data.execution_id;
-  //   } catch (error) {
-  //     const axiosError = error as AxiosError;
-  //     console.error('Dune query execution failed:', axiosError.response?.data || axiosError.message);
-  //     throw error;
-  //   }
-  // }
-
   private async pollForResults<T>(
-    // executionId: string, 
     queryId: number,
     limit: number = 1000,
     offset: number = 0,
-    maxAttempts: number = config.maxRetries
+    maxAttempts: number = config.maxRetries,
   ): Promise<T[]> {
 
     const url = `${this.baseUrl}/query/${queryId}/results?limit=${limit}&offset=${offset}`;
@@ -164,14 +128,13 @@ export class DuneAnalytics {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         const response: AxiosResponse<DuneResultsResponse<T>> = await axios.get(
-          // `${this.baseUrl}/execution/${executionId}/results?limit=${limit}&offset=${offset}`,
           url,
           {
             headers: {
-              'X-Dune-API-Key': this.apiKey
+              'X-Dune-API-Key': this.apiKey,
             },
-            timeout: this.timeout
-          }
+            timeout: this.timeout,
+          },
         );
 
         const { state, result, error } = response.data;
@@ -184,13 +147,11 @@ export class DuneAnalytics {
         }
 
         console.log(`Query still running... (attempt ${attempt + 1}/${maxAttempts})`);
-        
         // Exponential backoff: base delay * 2^attempt, with jitter
         const baseDelay = config.retryDelay;
         const exponentialDelay = baseDelay * Math.pow(2, attempt);
         const jitter = Math.random() * 0.1 * exponentialDelay; // 10% jitter
         const delay = Math.min(exponentialDelay + jitter, 30000); // Cap at 30 seconds
-        
         console.log(`Waiting ${Math.round(delay)}ms before next attempt...`);
         await this.sleep(delay);
       } catch (error) {

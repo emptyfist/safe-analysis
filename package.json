@@ -16,21 +16,31 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "viem": "^2.21.4",
     "axios": "^1.7.7",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "viem": "^2.21.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.29.0",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "eslint": "^8.0.0",
+    "eslint": "^8.57.1",
+    "globals": "^16.2.0",
+    "nodemon": "^3.1.4",
     "rimraf": "^5.0.0",
     "ts-node": "^10.9.0",
     "typescript": "^5.0.0",
-    "nodemon": "^3.1.4"
+    "typescript-eslint": "^8.34.1"
   },
-  "keywords": ["safe", "ethereum", "defi", "protocols", "analytics", "typescript"],
+  "keywords": [
+    "safe",
+    "ethereum",
+    "defi",
+    "protocols",
+    "analytics",
+    "typescript"
+  ],
   "author": "",
   "license": "MIT"
 }

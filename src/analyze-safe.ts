@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import config from './config';
-import { DuneAnalytics } from './dune-query';
-import type { AnalyzedTransaction } from './types';
+import config from '@/config';
+import { DuneAnalytics } from '@/dune-query';
+import type { AnalyzedTransaction } from '@/types';
 
 interface ProtocolResult {
   interactions: number;
@@ -36,23 +36,20 @@ export class AnalyzeSafe {
     try {
       // Check if file exists
       await fs.access(filepath);
-      
+
       // File exists - load data from file
-      console.log(`Loading dictionary from cache...`);
-      
+      console.log('Loading dictionary from cache...');
       const fileContent = await fs.readFile(filepath, 'utf-8');
       this.dictionary = JSON.parse(fileContent);
-      
       console.log(`Loaded ${Object.keys(this.dictionary).length} entries from dictionary`);
     } catch (error) {
       // File doesn't exist - get data from Dune API
-      console.log(`Dictionary not found, fetching from Dune API...`);
+      console.log('Dictionary not found, fetching from Dune API...', error);
 
       this.dictionary = await this.duneQuery.getContractNames(config.duneQueryIdForLabels);
 
       // Save to file
       await this.saveDictionaryToFile(filepath);
-      
       console.log(`Fetched and saved ${Object.keys(this.dictionary).length} entries`);
     }
   }
@@ -65,10 +62,8 @@ export class AnalyzeSafe {
       // Ensure directory exists
       const dir = path.dirname(filePath);
       await fs.mkdir(dir, { recursive: true });
-      
       // Save to file with pretty formatting
       await fs.writeFile(filePath, JSON.stringify(this.dictionary, null, 2), 'utf-8');
-      
       console.log(`Dictionary saved to ${filePath}`);
     } catch (error) {
       console.error(`Error saving dictionary to file: ${error}`);
@@ -77,8 +72,8 @@ export class AnalyzeSafe {
   }
 
   async handle(
-    data: AnalyzedTransaction[], 
-    interactAddresses: string[]
+    data: AnalyzedTransaction[],
+    interactAddresses: string[],
   ): Promise<Record<string, AnalyzedTransaction>> {
     const days = config.defaultDays;
     const topCount = config.defaultTopCount;
@@ -91,14 +86,13 @@ export class AnalyzeSafe {
     for (const address of interactAddresses) {
       const normalizedAddress = address.toLowerCase();
       const existing = result[normalizedAddress];
-      
       if (existing) {
-        existing.tx_count ++;
+        existing.tx_count += 1;
       } else {
         result[normalizedAddress] = {
           tx_count: 1,
           namespace: config.analyzeWithLabel ? (dictionary[normalizedAddress] ?? '') : normalizedAddress,
-          total_gas: 0
+          total_gas: 0,
         };
       }
     }
@@ -115,9 +109,9 @@ export class AnalyzeSafe {
   }
 
   private async exportResults(
-    analyzedData: AnalyzedTransaction[], 
-    rankedMultiSendData: AnalyzedTransaction[], 
-    metadata: { days: number; topCount: number }
+    analyzedData: AnalyzedTransaction[],
+    rankedMultiSendData: AnalyzedTransaction[],
+    metadata: { days: number; topCount: number },
   ): Promise<void> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const filename = `safe-analysis-${timestamp}`;
@@ -131,10 +125,10 @@ export class AnalyzeSafe {
   }
 
   private async exportAsJson(
-    analyzedData: AnalyzedTransaction[], 
-    rankedMultiSendData: AnalyzedTransaction[], 
-    filename: string, 
-    metadata: { days: number; topCount: number }
+    analyzedData: AnalyzedTransaction[],
+    rankedMultiSendData: AnalyzedTransaction[],
+    filename: string,
+    metadata: { days: number; topCount: number },
   ): Promise<void> {
     const output: ExportData = {
       metadata: {
@@ -149,7 +143,7 @@ export class AnalyzeSafe {
       multiSend: rankedMultiSendData.map(protocol => ({
         name: protocol.namespace,
         interactions: protocol.tx_count,
-      }))
+      })),
     };
 
     const filepath = path.join(this.outputDir, `${filename}.json`);
@@ -158,8 +152,8 @@ export class AnalyzeSafe {
   }
 
   private generateSummary(
-    analyzedData: AnalyzedTransaction[], 
-    rankedMultiSendData: AnalyzedTransaction[]
+    analyzedData: AnalyzedTransaction[],
+    rankedMultiSendData: AnalyzedTransaction[],
   ): void {
     const totals = analyzedData.reduce((acc, protocol) => {
       acc.transactions += +protocol.tx_count;

@@ -29,7 +29,7 @@ const config: Config = {
   duneQueryIdForTransactions: parseInt(process.env.DUNE_SAFE_TRANSACTIONS || '5281902'),
   duneQueryIdForStatistics: parseInt(process.env.DUNE_STATISTICS_NON_MULTISEND || '5312034'),
   duneQueryIdForLabels: parseInt(process.env.DUNE_CONTRACT_LABELS || '5282105'),
-  analyzeWithLabel: parseInt(process.env.ANALYZE_WITH_LABEL || '0') === 1
+  analyzeWithLabel: parseInt(process.env.ANALYZE_WITH_LABEL || '0') === 1,
 };
 
 export default config;

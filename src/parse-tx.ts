@@ -1,17 +1,17 @@
-import { 
-  Abi, 
-  decodeFunctionData, 
-  hexToBytes, 
-  parseAbi, 
-  bytesToBigInt, 
-  bytesToNumber, 
-  bytesToHex, 
-  type Hex 
+import {
+  Abi,
+  decodeFunctionData,
+  hexToBytes,
+  parseAbi,
+  bytesToBigInt,
+  bytesToNumber,
+  bytesToHex,
+  type Hex,
 } from 'viem';
-import type { 
-  DuneMultiSendTransaction, 
-  MultiSendTransaction, 
-} from './types/index';
+import type {
+  DuneMultiSendTransaction,
+  MultiSendTransaction,
+} from '@/types';
 
 // const COMMON_ERC20_TRANSFER_SIGNATURE: Record<string, string> = {
 //   '0xa9059cbb': 'function transfer(address to, uint256 amount) external returns (bool)',
@@ -48,7 +48,6 @@ export class ParseTransaction {
     try {
       return rawData.reduce((result: string[], tx) => {
         result.push(...this.decodeMultiSend(tx.data));
-        
         return result;
       }, []);
     } catch (error) {
@@ -63,10 +62,9 @@ export class ParseTransaction {
     try {
       const decoded = decodeFunctionData({
         abi: this.multisendAbi,
-        data
+        data,
       });
-
-       if (decoded.functionName !== 'multiSend') {
+      if (decoded.functionName !== 'multiSend') {
         return [];
       }
 
@@ -75,6 +73,7 @@ export class ParseTransaction {
 
       return transactionsData.map(tx => tx.to);
     } catch (error) {
+      console.error('Error decoding multiSend transaction:', error);
       return [];
     }
   }
@@ -123,7 +122,7 @@ export class ParseTransaction {
           to,
           value,
           data: callData,
-          dataLength
+          dataLength,
         });
 
       } catch (error) {
