@@ -1,6 +1,9 @@
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import config from './config';
-import { DuneTransaction, ParsedTransaction } from './types';
+import type { 
+  AnalyzedTransaction, 
+  DuneMultiSendTransaction, 
+} from './types';
 import { ParseTransaction } from './parse-tx';
 
 type ContractLabel = {
@@ -9,10 +12,10 @@ type ContractLabel = {
   namespace: string;
 }
 
-type DuneExecuteResponse = {
-  execution_id: string;
-  state: string;
-}
+// type DuneExecuteResponse = {
+//   execution_id: string;
+//   state: string;
+// }
 
 type DuneResultsResponse<T> = {
   execution_id: string;
@@ -45,8 +48,8 @@ export class DuneAnalytics {
     }
   }
 
-  async getContractNames(queryId: number) {
-    let result: Map<string, string> = new Map<string, string>()
+  async getContractNames(queryId: number): Promise<Record<string, string>> {
+    const result: Record<string, string> = {};
     const perPage = config.dataPerQuery;
     let currentPage = 1;
     let hasMoreData = true;
@@ -54,81 +57,97 @@ export class DuneAnalytics {
     try {
       // while (hasMoreData) {
         const data = await this.pollForResults<ContractLabel>(queryId, perPage, (currentPage - 1) * perPage);
-        data.reduce((map, item) => {
-          map.set(item.address.toLowerCase(), item.namespace);
-          return map;
-        }, result);
+        data.forEach(item => {
+          result[item.address.toLowerCase()] = item.namespace;
+        });
 
         hasMoreData = data.length >= perPage;
         currentPage ++;
       // }
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error('Error fetching contract names:', error);
       throw error;
     }
 
     return result;
   }
 
-  async getSafeTransactions(
-    queryId: number, 
-    parameters: Record<string, any> = {}
-  ): Promise<ParsedTransaction[]> {
-    let result: ParsedTransaction[] = [];
+  async getStatistics(queryId: number): Promise<AnalyzedTransaction[]> {
+    // Input validation
+    if (queryId <= 0) return [];
+
+    return await this.getPaginatedData<AnalyzedTransaction>(queryId);
+  }
+
+  async getSafeTransactions(queryId: number): Promise<string[]> {
+    // Input validation
+    if (queryId <= 0) return [];
+
+    const data = await this.getPaginatedData<DuneMultiSendTransaction>(queryId);
+
+    return this.parseTx.decodeSafeTransaction(data);
+  }
+
+  private async getPaginatedData<T>(queryId: number): Promise<T[]> {
     const perPage = config.dataPerQuery;
     let currentPage = 1;
     let hasMoreData = true;
+    const allPages: T[][] = [];
 
     try {
-      // const executionId = await this.executeQuery(queryId/*, parameters*/);
+      while (hasMoreData) {
+        const data = await this.pollForResults<T>(queryId, perPage, (currentPage - 1) * perPage);
 
-      // while (hasMoreData) {
-        const data = await this.pollForResults<DuneTransaction>(queryId, perPage, (currentPage - 1) * perPage);
+        // Early exit if no data returned
+        if (!data || data.length === 0) {
+          hasMoreData = false;
+          break;
+        }
 
-        const parsedResults = await this.parseTx.decodeSafeTransaction(data);
-        result = result.concat(parsedResults);
+        allPages.push(data);
 
         hasMoreData = data.length >= perPage;
-        currentPage ++;
-      // }
+        currentPage++;
+      }
     } catch (error) {
       console.error('Error fetching transactions:', error);
       throw error;
     }
 
-    return result;
+    // Use flat instead of reduce for better performance
+    return allPages.flat();
   }
 
-  private async executeQuery(
-    queryId: number, 
-    parameters: Record<string, any> = {}
-  ): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('Dune API key not configured');
-    }
+  // private async executeQuery(
+  //   queryId: number, 
+  //   parameters: Record<string, any> = {}
+  // ): Promise<string> {
+  //   if (!this.apiKey) {
+  //     throw new Error('Dune API key not configured');
+  //   }
 
-    try {
-      console.log(`Executing Dune query ${queryId}...`);
+  //   try {
+  //     console.log(`Executing Dune query ${queryId}...`);
       
-      const executeResponse: AxiosResponse<DuneExecuteResponse> = await axios.post(
-        `${this.baseUrl}/query/${queryId}/execute`,
-        { query_parameters: parameters },
-        {
-          headers: {
-            'X-Dune-API-Key': this.apiKey,
-            'Content-Type': 'application/json'
-          },
-          timeout: this.timeout
-        }
-      );
+  //     const executeResponse: AxiosResponse<DuneExecuteResponse> = await axios.post(
+  //       `${this.baseUrl}/query/${queryId}/execute`,
+  //       { query_parameters: parameters },
+  //       {
+  //         headers: {
+  //           'X-Dune-API-Key': this.apiKey,
+  //           'Content-Type': 'application/json'
+  //         },
+  //         timeout: this.timeout
+  //       }
+  //     );
 
-      return executeResponse.data.execution_id;
-    } catch (error) {
-      const axiosError = error as AxiosError;
-      console.error('Dune query execution failed:', axiosError.response?.data || axiosError.message);
-      throw error;
-    }
-  }
+  //     return executeResponse.data.execution_id;
+  //   } catch (error) {
+  //     const axiosError = error as AxiosError;
+  //     console.error('Dune query execution failed:', axiosError.response?.data || axiosError.message);
+  //     throw error;
+  //   }
+  // }
 
   private async pollForResults<T>(
     // executionId: string, 
@@ -165,12 +184,23 @@ export class DuneAnalytics {
         }
 
         console.log(`Query still running... (attempt ${attempt + 1}/${maxAttempts})`);
-        await this.sleep(config.retryDelay);
+        
+        // Exponential backoff: base delay * 2^attempt, with jitter
+        const baseDelay = config.retryDelay;
+        const exponentialDelay = baseDelay * Math.pow(2, attempt);
+        const jitter = Math.random() * 0.1 * exponentialDelay; // 10% jitter
+        const delay = Math.min(exponentialDelay + jitter, 30000); // Cap at 30 seconds
+        
+        console.log(`Waiting ${Math.round(delay)}ms before next attempt...`);
+        await this.sleep(delay);
       } catch (error) {
         const axiosError = error as AxiosError;
         if (axiosError.response?.status === 429) {
           console.log('Rate limited, waiting longer...');
-          await this.sleep(5000);
+          // Exponential backoff for rate limiting: 5s * 2^attempt
+          const rateLimitDelay = Math.min(5000 * Math.pow(2, attempt), 60000); // Cap at 60 seconds
+          console.log(`Rate limited, waiting ${Math.round(rateLimitDelay)}ms...`);
+          await this.sleep(rateLimitDelay);
           continue;
         }
         throw error;

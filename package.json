@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "viem": "^2.21.4",
-    "ethers": "^6.13.2",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5"
   },

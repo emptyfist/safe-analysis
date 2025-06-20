@@ -10,24 +10,26 @@ export interface Config {
   apiTimeout: number;
   maxRetries: number;
   retryDelay: number;
-  duneTransaction: number;
-  duneLabels: number;
+  duneQueryIdForTransactions: number;
+  duneQueryIdForStatistics: number;
+  duneQueryIdForLabels: number;
   analyzeWithLabel: boolean;
   dataPerQuery: number;
 }
 
 const config: Config = {
-  duneApiKey: process.env.DUNE_API_KEY || '',
   defaultDays: parseInt(process.env.DEFAULT_DAYS || '30'),
   defaultTopCount: parseInt(process.env.DEFAULT_TOP_COUNT || '100'),
+  dataPerQuery: parseInt(process.env.DATA_PER_QUERY || '1000'),
   outputDir: process.env.OUTPUT_DIR || 'output',
   apiTimeout: parseInt(process.env.API_TIMEOUT || '30000'),
   maxRetries: parseInt(process.env.MAX_RETRIES || '60'),
   retryDelay: parseInt(process.env.RETRY_DELAY || '2000'),
-  duneTransaction: parseInt(process.env.DUNE_SAFE_TRANSACTIONS || '5281902'),
-  duneLabels: parseInt(process.env.DUNE_CONTRACT_LABELS || '5282105'),
-  analyzeWithLabel: parseInt(process.env.ANALYZE_WITH_LABEL || '0') === 1,
-  dataPerQuery: parseInt(process.env.DATA_PER_QUERY || '1000')
+  duneApiKey: process.env.DUNE_API_KEY || '',
+  duneQueryIdForTransactions: parseInt(process.env.DUNE_SAFE_TRANSACTIONS || '5281902'),
+  duneQueryIdForStatistics: parseInt(process.env.DUNE_STATISTICS_NON_MULTISEND || '5312034'),
+  duneQueryIdForLabels: parseInt(process.env.DUNE_CONTRACT_LABELS || '5282105'),
+  analyzeWithLabel: parseInt(process.env.ANALYZE_WITH_LABEL || '0') === 1
 };
 
 export default config;

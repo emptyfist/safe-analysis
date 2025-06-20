@@ -3,7 +3,6 @@
 ## Presentation
 [Working.webm](https://github.com/user-attachments/assets/4b7aa634-e07a-4dee-8613-166ad9ed9035)
 
-
 A TypeScript-based analytics tool for analyzing Safe multisig wallet protocol interactions on Ethereum mainnet using Dune Analytics data.
 
 ## Purpose
@@ -11,9 +10,9 @@ A TypeScript-based analytics tool for analyzing Safe multisig wallet protocol in
 Safe Analysis provides comprehensive insights into how Safe multisig wallets interact with different protocols on Ethereum. The tool leverages Dune Analytics' powerful querying capabilities to:
 
 - **Protocol Interaction Analysis**: Analyze which protocols Safe wallets interact with most frequently
-- **Transaction Decoding**: Decode Safe transactions including multi-send operations and ERC20 transfers
+- **Multi-send Transaction Decoding**: Decode Safe's multi-send operations to extract individual protocol interactions
+- **Statistical Data Analysis**: Process non-multi-send Safe wallet transactions for comprehensive insights
 - **Smart Contract Label Resolution**: Optionally resolve contract addresses to human-readable protocol names
-- **Gas Usage Analytics**: Track gas consumption patterns across different protocol interactions
 - **Top Protocol Rankings**: Generate ranked lists of the most popular protocols based on interaction frequency
 - **Data Export**: Export analysis results in structured JSON format for further processing
 
@@ -49,13 +48,7 @@ yarn install
 
 #### 3. Environment Configuration
 
-Copy the example environment file and configure your settings:
-
-```bash
-cp .env.example .env
-```
-
-Edit the `.env` file with your configuration:
+Create a `.env` file in the project root with your configuration:
 
 ```bash
 # Required: Dune Analytics API Key
@@ -63,10 +56,11 @@ DUNE_API_KEY=your_dune_api_key_here
 
 # Query Configuration
 DUNE_SAFE_TRANSACTIONS=5281902
+DUNE_STATISTICS_NON_MULTISEND=5312034
 DUNE_CONTRACT_LABELS=5282105
 
 # Analysis Settings
-ANALYZE_WITH_LABEL=1
+ANALYZE_WITH_LABEL=0
 DEFAULT_DAYS=30
 DEFAULT_TOP_COUNT=100
 DATA_PER_QUERY=1000
@@ -93,24 +87,12 @@ Run the analysis with default settings (last 30 days, top 100 protocols):
 npm start
 ```
 
-#### Custom Analysis Parameters
-
-```bash
-# Analyze last 7 days
-npm start -- --days 7
-
-# Get top 50 protocols
-npm start -- --top 50
-
-# Combine parameters
-npm start -- --days 14 --top 25
-```
-
 #### Available CLI Options
 
 ```bash
 # Show help
 npm start -- --help
+```
 
 ### Advanced Configuration
 
@@ -119,9 +101,10 @@ npm start -- --help
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
 | `DUNE_API_KEY` | Your Dune Analytics API key | - | ✅ |
-| `DUNE_SAFE_TRANSACTIONS` | Dune query ID for Safe transactions | 5281902 | ✅ |
+| `DUNE_SAFE_TRANSACTIONS` | Dune query ID for Safe multi-send transactions | 5281902 | ✅ |
+| `DUNE_STATISTICS_NON_MULTISEND` | Dune query ID for non-multi-send statistics | 5312034 | ✅ |
 | `DUNE_CONTRACT_LABELS` | Dune query ID for contract labels | 5282105 | ✅ |
-| `ANALYZE_WITH_LABEL` | Enable contract name resolution (0/1) | 1 | ❌ |
+| `ANALYZE_WITH_LABEL` | Enable contract name resolution (0/1) | 0 | ❌ |
 | `DEFAULT_DAYS` | Default analysis period in days | 30 | ❌ |
 | `DEFAULT_TOP_COUNT` | Default number of top protocols | 100 | ❌ |
 | `DATA_PER_QUERY` | Records per API request | 1000 | ❌ |
@@ -138,7 +121,7 @@ The tool can optionally resolve contract addresses to protocol names using Dune'
 # Enable label resolution (requires more API credits)
 ANALYZE_WITH_LABEL=1
 
-# Disable for faster analysis
+# Disable for faster analysis (recommended for initial runs)
 ANALYZE_WITH_LABEL=0
 ```
 
@@ -157,12 +140,11 @@ When enabling contract label resolution, consider the following recommendations 
 ANALYZE_WITH_LABEL=0
 DATA_PER_QUERY=500
 DEFAULT_TOP_COUNT=50
-DEFAULT_DAYS=7
 ```
 
 **Cost Management:**
 - **Start Small**: Begin with shorter time periods (7 days) and fewer results (top 50) to estimate credit usage
-- **Cache Awareness**: The tool caches label data in `dictionary.json` - subsequent runs will be faster and use fewer credits
+- **Cache Awareness**: The tool caches label data in `output/dictionary.json` - subsequent runs will be faster and use fewer credits
 - **Selective Usage**: Only enable labels for final analyses; use `ANALYZE_WITH_LABEL=0` for exploratory work
 
 **Troubleshooting Label Resolution:**
@@ -177,7 +159,7 @@ DEFAULT_DAYS=7
 #### Development Mode
 
 ```bash
-# Run in development mode with hot reload
+# Run in development mode with ts-node
 npm run dev
 ```
 
@@ -202,6 +184,13 @@ npm run type-check
 npm run lint
 ```
 
+#### Clean Build
+
+```bash
+# Clean and rebuild
+npm run clean && npm run build
+```
+
 ### Output Format
 
 The tool generates JSON files in the specified output directory with the following structure:
@@ -213,45 +202,19 @@ The tool generates JSON files in the specified output directory with the followi
     "analysis_period_days": 30,
     "top_count": 100
   },
-  "protocols": [
+  "nonMultiSend": [
     {
-      "address": "0x1f98431c8ad98523631ae4a59f267346ea31f984",
-      "interactions": 1247,
-      "name": "Uniswap V3: Factory"
-    },
+      "name": "uniswap v3",
+      "interactions": 1247
+    }
+  ],
+  "multiSend": [
     {
-      "address": "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
-      "interactions": 892,
-      "name": "Uniswap V3: Router 2"
+      "name": "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
+      "interactions": 892
     }
   ]
 }
-```
-
-### Example Workflows
-
-#### Basic Protocol Analysis
-
-```bash
-# Analyze the most popular protocols over the last 30 days
-npm start
-
-# Quick analysis for the last week
-npm start -- --days 7 --top 20
-```
-
-#### Research Workflow
-
-```bash
-# Detailed analysis with contract labels for research
-ANALYZE_WITH_LABEL=1 npm start -- --days 90 --top 200
-```
-
-#### Monitoring Workflow
-
-```bash
-# Daily monitoring of top protocols
-npm start -- --days 1 --top 50
 ```
 
 ### Understanding the Results
@@ -259,9 +222,9 @@ npm start -- --days 1 --top 50
 The analysis provides several key metrics:
 
 - **Interactions**: Number of times Safe wallets interacted with each protocol
-- **Gas Usage**: Total gas consumed in interactions (if available)
-- **Protocol Names**: Human-readable protocol names (when label resolution is enabled)
-- **Contract Addresses**: Ethereum addresses of the protocol contracts
+- **Protocol Names**: Human-readable protocol names (when label resolution is enabled) or contract addresses
+- **Multi-send vs Non-multi-send**: Separate analysis for different transaction types
+- **Gas Usage**: Total gas consumed in interactions (if available in the data)
 
 ### Transaction Decoding Features
 
@@ -317,3 +280,37 @@ DEBUG=safe-analysis npm start
 - **API Credits**: Each analysis consumes Dune Analytics credits based on query complexity and data volume
 
 For optimal performance, start with shorter time periods and smaller top counts, then scale up as needed.
+
+## Project Structure
+
+```
+safe-analysis/
+├── src/
+│   ├── index.ts              # Main application entry point
+│   ├── analyze-safe.ts       # Core analysis logic
+│   ├── dune-query.ts         # Dune Analytics API integration
+│   ├── parse-tx.ts           # Transaction parsing utilities
+│   ├── config/
+│   │   └── index.ts          # Configuration management
+│   └── types/
+│       └── index.ts          # TypeScript type definitions
+├── sample/                   # Sample data and demo files
+├── output/                   # Generated analysis results
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+## Dependencies
+
+### Production Dependencies
+- **viem**: Ethereum interaction library
+- **axios**: HTTP client for API requests
+- **dotenv**: Environment variable management
+
+### Development Dependencies
+- **TypeScript**: Type safety and compilation
+- **ts-node**: TypeScript execution in development
+- **ESLint**: Code linting
+- **rimraf**: Cross-platform file deletion
+- **nodemon**: Development file watching
