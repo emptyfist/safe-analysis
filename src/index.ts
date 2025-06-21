@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { AnalyzeSafe } from '@/analyze-safe';
-import { DuneAnalytics } from '@/dune-query';
-import config from '@/config';
+import { AnalyzeSafe } from './analyze-safe'; 
+import { DuneAnalytics } from './dune-query';
+import config from './config';
 
 type CommandLineArgs = {
   help?: boolean;

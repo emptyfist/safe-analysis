@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import config from '@/config';
-import { DuneAnalytics } from '@/dune-query';
-import type { AnalyzedTransaction } from '@/types';
+import config from './config';
+import { DuneAnalytics } from './dune-query';
+import type { AnalyzedTransaction } from './types';
 
 interface ProtocolResult {
   interactions: number;

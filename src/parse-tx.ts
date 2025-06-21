@@ -11,7 +11,7 @@ import {
 import type {
   DuneMultiSendTransaction,
   MultiSendTransaction,
-} from '@/types';
+} from './types';
 
 // const COMMON_ERC20_TRANSFER_SIGNATURE: Record<string, string> = {
 //   '0xa9059cbb': 'function transfer(address to, uint256 amount) external returns (bool)',
