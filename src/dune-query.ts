@@ -1,10 +1,10 @@
 import axios, { AxiosResponse, AxiosError } from 'axios';
-import config from '@/config';
+import config from './config';
 import type {
   AnalyzedTransaction,
   DuneMultiSendTransaction,
-} from '@/types';
-import { ParseTransaction } from '@/parse-tx';
+} from './types';
+import { ParseTransaction } from './parse-tx';
 
 type ContractLabel = {
   address: string;

@@ -58,7 +58,7 @@ export class ParseTransaction {
   /**
    * Decode multiSend transactions
    */
-  private decodeMultiSend(data: Hex): string[] {
+  decodeMultiSend(data: Hex): string[] {
     try {
       const decoded = decodeFunctionData({
         abi: this.multisendAbi,
