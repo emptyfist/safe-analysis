@@ -1,0 +1,709 @@
+{
+  "metadata": {
+    "generated_at": "2025-06-21T18:59:42.430Z",
+    "analysis_period_days": 30,
+    "top_count": 100
+  },
+  "result": [
+    {
+      "gas": "29319256",
+      "namespace": "circle",
+      "to": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "tx_cnt": 17628,
+      "value": "0"
+    },
+    {
+      "gas": "7135900",
+      "namespace": "tether",
+      "to": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      "tx_cnt": 8905,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 5324,
+      "namespace": "",
+      "to": "0xb0415d55f2c87b7f99285848bd341c367feac1ea",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "3022200000",
+      "namespace": "fun_xyz",
+      "to": "0x8629bcd3b8a90fd7247f0c0e0e1434c69dadcca7",
+      "tx_cnt": 5037,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "parax",
+      "to": "0x6d596fdfd3381ebb5ecd526ebcaec8cc2ba019ff",
+      "tx_cnt": 3788,
+      "value": "0"
+    },
+    {
+      "gas": "1843717",
+      "namespace": "gnosis_protocol_v2",
+      "to": "0x9008d19f58aabd9ed0d60971565aa8510560ab41",
+      "tx_cnt": 3683,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0xf8dff673b555a225e149218c5005fc88f4a13870",
+      "tx_cnt": 2040,
+      "value": "0"
+    },
+    {
+      "gas": "188821090",
+      "namespace": null,
+      "to": "0x6c6f5b091bc50a6cb62e55b5c1eb7455205d2880",
+      "tx_cnt": 1713,
+      "value": "0"
+    },
+    {
+      "gas": "25333",
+      "namespace": "plume",
+      "to": "0x4c1746a800d224393fe2470c70a35717ed4ea5f1",
+      "tx_cnt": 1534,
+      "value": "0"
+    },
+    {
+      "gas": "209632",
+      "namespace": "chainlink",
+      "to": "0x514910771af9ca656af840dff83e8264ecf986ca",
+      "tx_cnt": 1403,
+      "value": "0"
+    },
+    {
+      "gas": "2676977",
+      "namespace": "aave_v3",
+      "to": "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2",
+      "tx_cnt": 1040,
+      "value": "0"
+    },
+    {
+      "gas": "3307509",
+      "namespace": "zeroex",
+      "to": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+      "tx_cnt": 987,
+      "value": "5549243081438709564868"
+    },
+    {
+      "gas": "0",
+      "namespace": "defisaver",
+      "to": "0x2ee96cf53ae5fbd5309284704f978d0ca66cb963",
+      "tx_cnt": 861,
+      "value": "4254617008795057855917"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x7159cc276d7d17ab4b3beb19959e1f39368a45ba",
+      "tx_cnt": 768,
+      "value": "0"
+    },
+    {
+      "gas": "3422787",
+      "namespace": "uniswap_v3",
+      "to": "0xc36442b4a4522e871399cd717abdd847ab11fe88",
+      "tx_cnt": 474,
+      "value": "1567724975851283461724"
+    },
+    {
+      "gas": "2545444",
+      "namespace": "pendle",
+      "to": "0x888888888889758f76e7103c6cbf23abbf58f946",
+      "tx_cnt": 449,
+      "value": "612420505009471326624"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x89a8c847f41c0dfa6c8b88638bacca8a0b777da7",
+      "tx_cnt": 414,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "morpho_blue",
+      "to": "0x6566194141eefa99af43bb5aa71460ca2dc90245",
+      "tx_cnt": 411,
+      "value": "2326936581112310"
+    },
+    {
+      "gas": "4924410",
+      "namespace": "safe",
+      "to": "0x5afe3855358e112b5647b952709e6165e1c1eeee",
+      "tx_cnt": 392,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x0000bbddc7ce488642fb579f8b00f3a590007251",
+      "tx_cnt": 380,
+      "value": "318"
+    },
+    {
+      "gas": "16016320",
+      "namespace": "ninechronicles",
+      "to": "0xf203ca1769ca8e9e8fe1da9d147db68b6c919817",
+      "tx_cnt": 367,
+      "value": "0"
+    },
+    {
+      "gas": "874872",
+      "namespace": "ty_test",
+      "to": "0x6b175474e89094c44da98b954eedeac495271d0f",
+      "tx_cnt": 353,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "lifi",
+      "to": "0x1231deb6f5749ef6ce6943a275a1d3e7486f4eae",
+      "tx_cnt": 351,
+      "value": "282965178496662310542"
+    },
+    {
+      "gas": "0",
+      "namespace": "etherfiliquiditypool",
+      "to": "0x308861a430be4cce5502d0a12724771fc6daf216",
+      "tx_cnt": 333,
+      "value": "11233887962317248677"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0xb16df6f4a58ecb26fab8e09a5195c062a08e21bc",
+      "tx_cnt": 331,
+      "value": "0"
+    },
+    {
+      "gas": "2065182",
+      "namespace": "gnosis_safe",
+      "to": "0xa0b937d5c8e32a80e3a8ed4227cd020221544ee6",
+      "tx_cnt": 329,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x8e0eef788350f40255d86dfe8d91ec0ad3a4547f",
+      "tx_cnt": 298,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "sky",
+      "to": "0xdc035d45d973e3ec169d2276ddab16f1e407384f",
+      "tx_cnt": 289,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "polygon",
+      "to": "0x455e53cbb86018ac2b8092fdcd39d8444affc3f6",
+      "tx_cnt": 279,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 279,
+      "namespace": "",
+      "to": "0x8bb4c975ff3c250e0ceea271728547f3802b36fd",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "0",
+      "namespace": "cow_protocol",
+      "to": "0xfdafc9d1902f4e0b84f65f49f244b32b31013b74",
+      "tx_cnt": 272,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "resolv_staking",
+      "to": "0xfe4bce4b3949c35fb17691d8b03c3cadbe2e5e23",
+      "tx_cnt": 271,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 271,
+      "namespace": "",
+      "to": "0xc0fde70a65c7569fe919be57492228dee8cdb585",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "tx_cnt": 263,
+      "namespace": "",
+      "to": "0x6cae28b3d09d8f8fc74ccd496ac986fc84c0c24e",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "143732",
+      "namespace": "wrappedbtc",
+      "to": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+      "tx_cnt": 256,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "umaproject",
+      "to": "0x1395d68ff98378760b266d66de30da94f5825717",
+      "tx_cnt": 238,
+      "value": "0"
+    },
+    {
+      "gas": "310894",
+      "namespace": "circle",
+      "to": "0x0a992d191deec32afe36203ad87d7d289a738f81",
+      "tx_cnt": 236,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "ssv",
+      "to": "0xdd9bc35ae942ef0cfa76930954a156b3ff30a4e1",
+      "tx_cnt": 233,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 226,
+      "namespace": "",
+      "to": "0x5fdad504e7895de9018a1e526c1a27823e346868",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "tx_cnt": 226,
+      "namespace": "",
+      "to": "0xf9de2b1ff0c6ac32e3ec211af76e8185c62812fa",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "tx_cnt": 225,
+      "namespace": "",
+      "to": "0x335eeef8e93a7a757d9e7912044d9cd264e2b2d8",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "163236",
+      "namespace": "spark",
+      "to": "0xc20059e0317de91738d13af027dfc4a50781b066",
+      "tx_cnt": 222,
+      "value": "0"
+    },
+    {
+      "gas": "1036980",
+      "namespace": "lido",
+      "to": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+      "tx_cnt": 205,
+      "value": "27932543550578955019114"
+    },
+    {
+      "tx_cnt": 205,
+      "namespace": "",
+      "to": "0x0a3bd90a5a1e52c2900c863bd2b37c3bf65ee310",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "0",
+      "namespace": "cow_protocol",
+      "to": "0xdef1ca1fb7fbcdc777520aa7f396b4e015f497ab",
+      "tx_cnt": 204,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x44f49ff0da2498bcb1d3dc7c0f999578f67fd8c6",
+      "tx_cnt": 198,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x3cf63891928b8ceebb81c95426600a18cd59c03f",
+      "tx_cnt": 193,
+      "value": "680000000000000000"
+    },
+    {
+      "gas": "207393",
+      "namespace": "lido",
+      "to": "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
+      "tx_cnt": 181,
+      "value": "482944348258389934529"
+    },
+    {
+      "gas": "8650000",
+      "namespace": "nexusmutual",
+      "to": "0xd7c49cee7e9188cca6ad8ff264c1da2e69d4cf3b",
+      "tx_cnt": 175,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 175,
+      "namespace": "",
+      "to": "0x6e15a54b5ecac17e58dadeddbe8506a7560252f9",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "tx_cnt": 172,
+      "namespace": "",
+      "to": "0xce391315b414d4c7555956120461d21808a69f3a",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "tx_cnt": 171,
+      "namespace": "",
+      "to": "0x28c3498b4956f4ad8d4549aca8f66260975d361a",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "169",
+      "namespace": "nexusmutual",
+      "to": "0xcafea54f03e1cc036653444e581a10a43b2487cd",
+      "tx_cnt": 169,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 167,
+      "namespace": "",
+      "to": "0xca0c6b264f0f9958ec186eb2eaa208966187d866",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "996915",
+      "namespace": "euler_v2",
+      "to": "0x0c9a3dd6b8f28529d72d7f9ce918d493519ee383",
+      "tx_cnt": 164,
+      "value": "101900000000000000040"
+    },
+    {
+      "gas": "22200000",
+      "namespace": null,
+      "to": "0x9e3b5582b22e3835896368017baff6d942a41cd9",
+      "tx_cnt": 162,
+      "value": "0"
+    },
+    {
+      "gas": "720938",
+      "namespace": "spark",
+      "to": "0xcba0c0a2a0b6bb11233ec4ea85c5bffea33e724d",
+      "tx_cnt": 159,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "renzo",
+      "to": "0x3b50805453023a91a8bf641e279401a0b23fa6f9",
+      "tx_cnt": 158,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 156,
+      "namespace": "",
+      "to": "0x734eec7930bc84ec5732022b9eb949a81fb89abe",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "0",
+      "namespace": "umaproject",
+      "to": "0xc4be2a6090ede6a23d68a742bbc9dd43edd5fa30",
+      "tx_cnt": 154,
+      "value": "0"
+    },
+    {
+      "gas": "378980",
+      "namespace": null,
+      "to": "0x000000000336701a9d410fbebe97c7299e48c50f",
+      "tx_cnt": 154,
+      "value": "600000000000000"
+    },
+    {
+      "tx_cnt": 154,
+      "namespace": "",
+      "to": "0x34ae0321aa0ab4cf288925072ba3b1c9b49f1cc1",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "tx_cnt": 153,
+      "namespace": "",
+      "to": "0x2a414884a549ef5716bc1a4e648d3dc03f08b2cf",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "tx_cnt": 153,
+      "namespace": "",
+      "to": "0xfe11047a60d7785cf5739d469fe40483b58a6594",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "0",
+      "namespace": "ethena_labs",
+      "to": "0x4c9edd5852cd905f086c759e8383e09bff1e68b3",
+      "tx_cnt": 150,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "umaproject",
+      "to": "0x5e0567dd3c3f91b5aa5255fd105fb5ac0c0ae1b0",
+      "tx_cnt": 150,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x51c72848c68a965f66fa7a88855f9f7784502a7f",
+      "tx_cnt": 141,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "request_v2",
+      "to": "0x370de27fdb7d1ff1e1baa7d11c5820a324cf623c",
+      "tx_cnt": 137,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 135,
+      "namespace": "",
+      "to": "0x323498d3fb02594ac3e0a11b2dea337893ecabbe",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "tx_cnt": 134,
+      "namespace": "",
+      "to": "0x3c2f6b6c188e1e9474b51e001cf01366ef88727c",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x7079ba1bd00eefcd2a260bbd6d088230505e3858",
+      "tx_cnt": 131,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "uniswap",
+      "to": "0x66a9893cc07d91d95644aedd05d03f95e1dba8af",
+      "tx_cnt": 129,
+      "value": "46831600906064903414"
+    },
+    {
+      "gas": "0",
+      "namespace": "aave",
+      "to": "0x1a88df1cfe15af22b3c4c783d4e6f7f9e0c1885d",
+      "tx_cnt": 127,
+      "value": "0"
+    },
+    {
+      "gas": "93553",
+      "namespace": "etherfi",
+      "to": "0x6db24ee656843e3fe03eb8762a54d86186ba6b64",
+      "tx_cnt": 126,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 126,
+      "namespace": "",
+      "to": "0x7bc1e07cdfa283db7cf3c680d16ca7f161a64046",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0xae6e307c3fe9e922e5674dbd7f830ed49c014c6b",
+      "tx_cnt": 125,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "sky",
+      "to": "0x56072c95faa701256059aa122697b133aded9279",
+      "tx_cnt": 122,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0xa03400e098f4421b34a3a44a1b4e571419517687",
+      "tx_cnt": 121,
+      "value": "39260000100000000000000"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x481aeeb9bdfe08f050d22f0b352356691c4b0b59",
+      "tx_cnt": 121,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x1ca12290d954cfe022323b6a6df92113ed6b1c98",
+      "tx_cnt": 119,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0xb8e6d31e7b212b2b7250ee9c26c56cebbfbe6b23",
+      "tx_cnt": 118,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x25500000d700bbe27104577cccce8eabcc96c8ad",
+      "tx_cnt": 117,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 116,
+      "namespace": "",
+      "to": "0x42bbfa2e77757c645eeaad1655e0911a7553efbc",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x3a43aec53490cb9fa922847385d82fe25d0e9de7",
+      "tx_cnt": 115,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "merkl",
+      "to": "0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae",
+      "tx_cnt": 115,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "etherfi",
+      "to": "0xfe0c30065b384f05761f15d0cc899d4f9f9cc0eb",
+      "tx_cnt": 114,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "gho",
+      "to": "0x40d16fc0246ad3160ccc09b8d0d3a2cd28ae6c2f",
+      "tx_cnt": 112,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 112,
+      "namespace": "",
+      "to": "0x48f509707b4c09e72e7b004bbe7fb02d4d4290c2",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "0",
+      "namespace": "fetch_ai",
+      "to": "0xaea46a60368a7bd060eec7df8cba43b7ef41ad85",
+      "tx_cnt": 111,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 111,
+      "namespace": "",
+      "to": "0x80adb36595239fe918c7d118c1f81e07d070801a",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0x0000000f2eb9f69274678c76222b35eec7588a65",
+      "tx_cnt": 103,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 102,
+      "namespace": "",
+      "to": "0x000000000000addb49795b0f9ba5bc298cdda236",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "tx_cnt": 99,
+      "namespace": "",
+      "to": "0x693a8bdc6c0c4855aa27541b6c0b106ac4a7de5f",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "147574",
+      "namespace": "sky",
+      "to": "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd",
+      "tx_cnt": 98,
+      "value": "0"
+    },
+    {
+      "tx_cnt": 93,
+      "namespace": "",
+      "to": "0x573ca38eb1353a0e8507be82ec6111f0af1f1e02",
+      "gas": 0,
+      "value": 0
+    },
+    {
+      "gas": "0",
+      "namespace": null,
+      "to": "0xd01607c3c5ecaba394d8be377a08590149325722",
+      "tx_cnt": 91,
+      "value": "24847828745372112160410"
+    },
+    {
+      "gas": "0",
+      "namespace": "dinero",
+      "to": "0x6df0e641fc9847c0c6fde39be6253045440c14d3",
+      "tx_cnt": 91,
+      "value": "0"
+    },
+    {
+      "gas": "744460",
+      "namespace": "oneinch",
+      "to": "0x111111125421ca6dc452d289314280a0f8842a65",
+      "tx_cnt": 88,
+      "value": "107418930526181707985"
+    },
+    {
+      "gas": "123430",
+      "namespace": "aave_v2",
+      "to": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
+      "tx_cnt": 87,
+      "value": "0"
+    },
+    {
+      "gas": "0",
+      "namespace": "umaproject",
+      "to": "0x10963af28b0e0ee84b30ddbe1e9d59f66a3bc57e",
+      "tx_cnt": 87,
+      "value": "0"
+    }
+  ]
+}

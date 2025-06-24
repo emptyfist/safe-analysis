@@ -5,6 +5,7 @@ import { DuneAnalytics } from './dune-query';
 import config from './config';
 
 type CommandLineArgs = {
+  days?: number;
   help?: boolean;
 }
 
@@ -28,29 +29,25 @@ export class SafeAnalysisApp {
     }
   }
 
-  async runAnalysis(): Promise<void> {
+  async runAnalysis(days: number): Promise<void> {
     const startTime = Date.now();
     const startMemory = process.memoryUsage();
     console.log('🔍 Starting Safe Wallet Protocol Analysis...');
-    console.log(`📅 Analyzing last ${config.defaultDays} days`);
+    console.log(`📅 Analyzing last ${days} days`);
     console.log(`🔢 Top ${config.defaultTopCount} protocols`);
     console.log('─'.repeat(50));
 
     try {
-      if (config.analyzeWithLabel) {
-        console.log('📊 Loading contract labels...');
-        await this.analyze.loadDictionary();
-      }
+      console.log('📊 Fetching analyzed Safe wallet transactions (non multiSend)...');
+      const statistics = await this.duneAnalytics.getAnalyzedData(config.duneQueryIdForStatistics, days);
+      console.log(`✅ Found ${statistics.length.toLocaleString()} analyzed data`);
 
-      console.log('📊 Fetching statistical(non multi-send Safe wallet transactions) data...');
-      const statistics = await this.duneAnalytics.getStatistics(config.duneQueryIdForStatistics);
-      console.log(`✅ Found ${statistics.length.toLocaleString()} statistical data`);
-
-      console.log('📊 Fetching multi-send Safe wallet transactions...');
-      const interactAddresses = await this.duneAnalytics.getSafeTransactions(config.duneQueryIdForTransactions);
+      console.log('📊 Fetching multiSend Safe wallet transactions...');
+      const interactAddresses = await this.duneAnalytics.getMultiSendTransactions(config.duneQueryIdForTransactions, days);
       console.log(`✅ Found ${interactAddresses.length.toLocaleString()} interacted addresses \n`);
 
-      await this.analyze.handle(statistics, interactAddresses);
+      await this.analyze.summarize(days, statistics, interactAddresses);
+
       // Performance metrics
       const endTime = Date.now();
       const endMemory = process.memoryUsage();
@@ -86,14 +83,18 @@ function parseCommandLineArgs(args: string[]): CommandLineArgs {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (!arg) continue;
+
     switch (arg) {
-    case '--help':
-      options.help = true;
-      break;
-    default:
-      if (arg.startsWith('--')) {
-        throw new Error(`Unknown option: ${arg}`);
-      }
+      case '--days':
+        options.days = parseInt(args[++i] || '0');
+        break;
+      case '--help':
+        options.help = true;
+        break;
+      default:
+        if (arg.startsWith('--')) {
+          throw new Error(`Unknown option: ${arg}`);
+        }
       break;
     }
   }
@@ -111,7 +112,7 @@ async function main(): Promise<void> {
   }
   try {
     await app.init();
-    await app.runAnalysis();
+    await app.runAnalysis(options.days ?? config.defaultDays);
   } catch (error) {
     const err = error as Error;
     console.error('💥 Application failed:', err.message);

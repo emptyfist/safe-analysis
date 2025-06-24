@@ -5,6 +5,7 @@ dotenv.config();
 export interface Config {
   duneApiKey: string;
   defaultDays: number;
+  dataPerQuery: number;
   defaultTopCount: number;
   outputDir: string;
   apiTimeout: number;
@@ -12,9 +13,6 @@ export interface Config {
   retryDelay: number;
   duneQueryIdForTransactions: number;
   duneQueryIdForStatistics: number;
-  duneQueryIdForLabels: number;
-  analyzeWithLabel: boolean;
-  dataPerQuery: number;
 }
 
 const config: Config = {
@@ -26,10 +24,8 @@ const config: Config = {
   maxRetries: parseInt(process.env.MAX_RETRIES || '60'),
   retryDelay: parseInt(process.env.RETRY_DELAY || '2000'),
   duneApiKey: process.env.DUNE_API_KEY || '',
-  duneQueryIdForTransactions: parseInt(process.env.DUNE_SAFE_TRANSACTIONS || '5281902'),
-  duneQueryIdForStatistics: parseInt(process.env.DUNE_STATISTICS_NON_MULTISEND || '5312034'),
-  duneQueryIdForLabels: parseInt(process.env.DUNE_CONTRACT_LABELS || '5282105'),
-  analyzeWithLabel: parseInt(process.env.ANALYZE_WITH_LABEL || '0') === 1,
+  duneQueryIdForTransactions: parseInt(process.env.DUNE_SAFE_MULTI_SEND_TRANSACTIONS || '5324337'),
+  duneQueryIdForStatistics: parseInt(process.env.DUNE_STATISTICS_NON_MULTISEND || '5324741'),
 };
 
 export default config;

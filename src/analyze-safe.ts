@@ -1,13 +1,8 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { formatEther } from 'viem';
 import config from './config';
-import { DuneAnalytics } from './dune-query';
-import type { AnalyzedTransaction } from './types';
-
-interface ProtocolResult {
-  interactions: number;
-  name: string;
-}
+import type { AnalyzedInfo } from './types';
 
 interface ExportData {
   metadata: {
@@ -15,166 +10,110 @@ interface ExportData {
     analysis_period_days: number;
     top_count: number;
   };
-  nonMultiSend: ProtocolResult[];
-  multiSend: ProtocolResult[];
+  result: AnalyzedInfo[];
 }
 
 export class AnalyzeSafe {
-  private readonly duneQuery: DuneAnalytics;
   private outputDir: string;
-  private dictionary: Record<string, string>;
 
   constructor(outputDir: string) {
-    this.duneQuery = new DuneAnalytics();
-    this.dictionary = {};
     this.outputDir = outputDir;
   }
 
-  async loadDictionary(): Promise<void> {
-    const filepath = path.join(this.outputDir, 'dictionary.json');
-
-    try {
-      // Check if file exists
-      await fs.access(filepath);
-
-      // File exists - load data from file
-      console.log('Loading dictionary from cache...');
-      const fileContent = await fs.readFile(filepath, 'utf-8');
-      this.dictionary = JSON.parse(fileContent);
-      console.log(`Loaded ${Object.keys(this.dictionary).length} entries from dictionary`);
-    } catch (error) {
-      // File doesn't exist - get data from Dune API
-      console.log('Dictionary not found, fetching from Dune API...', error);
-
-      this.dictionary = await this.duneQuery.getContractNames(config.duneQueryIdForLabels);
-
-      // Save to file
-      await this.saveDictionaryToFile(filepath);
-      console.log(`Fetched and saved ${Object.keys(this.dictionary).length} entries`);
-    }
-  }
-
-  /**
-   * Helper method to save dictionary to file as JSON
-   */
-  private async saveDictionaryToFile(filePath: string): Promise<void> {
-    try {
-      // Ensure directory exists
-      const dir = path.dirname(filePath);
-      await fs.mkdir(dir, { recursive: true });
-      // Save to file with pretty formatting
-      await fs.writeFile(filePath, JSON.stringify(this.dictionary, null, 2), 'utf-8');
-      console.log(`Dictionary saved to ${filePath}`);
-    } catch (error) {
-      console.error(`Error saving dictionary to file: ${error}`);
-      throw error;
-    }
-  }
-
-  async handle(
-    data: AnalyzedTransaction[],
-    interactAddresses: string[],
-  ): Promise<Record<string, AnalyzedTransaction>> {
-    const days = config.defaultDays;
+  async summarize(
+    days: number,
+    analyzedData: AnalyzedInfo[],
+    multiSendAddresses: string[],
+  ) {
     const topCount = config.defaultTopCount;
 
-    // Pre-allocate result object for better performance
-    const result: Record<string, AnalyzedTransaction> = {};
-    const dictionary = this.dictionary;
+    const result: Record<string, AnalyzedInfo> = Object.fromEntries(
+      analyzedData.map(data => {
+        try {
+          return [data.to.toLowerCase(), data]
+        } catch (error) {
+          console.error('❌ Error parsing address:', error);
+          return ['', {
+            tx_cnt: 0,
+            namespace: '',
+            to: '',
+            gas: 0,
+            value: 0,
+          }]
+        }
+      })
+    );
 
     // Process transactions in a single pass
-    for (const address of interactAddresses) {
+    for (const address of multiSendAddresses) {
       const normalizedAddress = address.toLowerCase();
       const existing = result[normalizedAddress];
       if (existing) {
-        existing.tx_count += 1;
+        existing.tx_cnt += 1;
       } else {
         result[normalizedAddress] = {
-          tx_count: 1,
-          namespace: config.analyzeWithLabel ? (dictionary[normalizedAddress] ?? '') : normalizedAddress,
-          total_gas: 0,
+          tx_cnt: 1,
+          namespace: '',
+          to: normalizedAddress,
+          gas: 0,
+          value: 0,
         };
       }
     }
 
     // Sort & Limit with interaction count
     const rankedMultiSendData = Object.values(result)
-      .sort((a, b) => b.tx_count - a.tx_count)
+      .sort((a, b) => b.tx_cnt - a.tx_cnt)
       .slice(0, topCount);
 
-    await this.exportResults(data, rankedMultiSendData, { days, topCount });
-    this.generateSummary(data, rankedMultiSendData);
-
-    return result;
+    await this.exportResults(rankedMultiSendData, days, topCount);
+    this.generateSummary(rankedMultiSendData, days, topCount);
   }
 
   private async exportResults(
-    analyzedData: AnalyzedTransaction[],
-    rankedMultiSendData: AnalyzedTransaction[],
-    metadata: { days: number; topCount: number },
+    result: AnalyzedInfo[],
+    days: number,
+    topCount: number,
   ): Promise<void> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const filename = `safe-analysis-${timestamp}`;
 
     try {
-      await this.exportAsJson(analyzedData, rankedMultiSendData, filename, metadata);
+      const output: ExportData = {
+        metadata: {
+          generated_at: new Date().toISOString(),
+          analysis_period_days: days,
+          top_count: topCount,
+        },
+        result
+      };
+  
+      const filepath = path.join(this.outputDir, `${filename}.json`);
+      await fs.writeFile(filepath, JSON.stringify(output, null, 2));
+      console.log(`📄 Results exported to: ${filepath}`);
+
     } catch (error) {
       const err = error as Error;
       console.error('❌ Export failed:', err.message);
     }
   }
 
-  private async exportAsJson(
-    analyzedData: AnalyzedTransaction[],
-    rankedMultiSendData: AnalyzedTransaction[],
-    filename: string,
-    metadata: { days: number; topCount: number },
-  ): Promise<void> {
-    const output: ExportData = {
-      metadata: {
-        generated_at: new Date().toISOString(),
-        analysis_period_days: metadata.days,
-        top_count: metadata.topCount,
-      },
-      nonMultiSend: analyzedData.map(protocol => ({
-        name: protocol.namespace,
-        interactions: protocol.tx_count,
-      })),
-      multiSend: rankedMultiSendData.map(protocol => ({
-        name: protocol.namespace,
-        interactions: protocol.tx_count,
-      })),
-    };
-
-    const filepath = path.join(this.outputDir, `${filename}.json`);
-    await fs.writeFile(filepath, JSON.stringify(output, null, 2));
-    console.log(`📄 Results exported to: ${filepath}`);
-  }
-
   private generateSummary(
-    analyzedData: AnalyzedTransaction[],
-    rankedMultiSendData: AnalyzedTransaction[],
+    result: AnalyzedInfo[],
+    days: number,
+    topCount: number,
   ): void {
-    const totals = analyzedData.reduce((acc, protocol) => {
-      acc.transactions += +protocol.tx_count;
-      acc.gas += +protocol.total_gas;
+    const totals = result.reduce((acc, protocol) => {
+      acc.transactions += +protocol.tx_cnt;
+      acc.gas += +protocol.gas;
+      acc.value += +protocol.value;
       return acc;
-    }, { transactions: 0, gas: 0 });
+    }, { transactions: 0, gas: 0, value: 0 });
 
     console.log('\n📈 TOP PROTOCOLS ANALYSIS SUMMARY');
     console.log('═'.repeat(50));
     console.log(`📊 Total Transactions: ${totals.transactions.toLocaleString()}`);
-    console.log(`⛽ Total Gas Used (Wei): ${totals.gas.toLocaleString()}`);
-    console.log(`🏆 Protocols Analyzed: ${analyzedData.length}`);
-
-    const multiSendTotals = rankedMultiSendData.reduce((acc, protocol) => {
-      acc += +protocol.tx_count;
-      return acc;
-    }, 0);
-
-    console.log('\n📊 TOP MULTI-SEND PROTOCOLS ANALYSIS SUMMARY');
-    console.log('═'.repeat(50));
-    console.log(`📊 Total Transactions: ${multiSendTotals.toLocaleString()}`);
-    console.log(`🏆 Protocols Analyzed: ${rankedMultiSendData.length}`);
+    console.log(`⛽ Total Gas Used (ETH): ${formatEther(BigInt(totals.gas))}`);
+    console.log(`⛽ Total Transfered ETH Value: ${formatEther(BigInt(totals.value))}`);
   }
 }

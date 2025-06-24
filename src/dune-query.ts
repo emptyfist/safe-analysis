@@ -1,21 +1,17 @@
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import config from './config';
 import type {
-  AnalyzedTransaction,
+  AnalyzedInfo,
   DuneMultiSendTransaction,
 } from './types';
 import { ParseTransaction } from './parse-tx';
 
-type ContractLabel = {
-  address: string;
-  name: string;
-  namespace: string;
+
+type DuneExecuteResponse = {
+  execution_id: string;
+  state: string;
 }
 
-// type DuneExecuteResponse = {
-//   execution_id: string;
-//   state: string;
-// }
 
 type DuneResultsResponse<T> = {
   execution_id: string;
@@ -44,55 +40,78 @@ export class DuneAnalytics {
     this.parseTx = new ParseTransaction();
   }
 
-  async getContractNames(queryId: number): Promise<Record<string, string>> {
-    const result: Record<string, string> = {};
-    const perPage = config.dataPerQuery;
-    let currentPage = 1;
-    let hasMoreData = true;
+  async getAnalyzedData(queryId: number, days: number): Promise<AnalyzedInfo[]> {
+    // Input validation
+    if (queryId <= 0) return [];
 
     try {
-      while (hasMoreData) {
-        const data = await this.pollForResults<ContractLabel>(queryId, perPage, (currentPage - 1) * perPage);
-        data.forEach(item => {
-          result[item.address.toLowerCase()] = item.namespace;
-        });
+      // execute query and get executionId
+      const executionId = await this.executeQuery(queryId, { pastPeriod: days });
+      // get data from executionId
+      return await this.getPaginatedData<AnalyzedInfo>(executionId);
+    } catch (error) { 
+      return [];
+    }
+  }
 
-        hasMoreData = data.length >= perPage;
-        currentPage += 1;
-      }
-    } catch (error) {
-      console.error('Error fetching contract names:', error);
-      throw error;
+  private async executeQuery(
+    queryId: number, 
+    parameters: Record<string, any> = {}
+  ): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('Dune API key not configured');
     }
 
-    return result;
+    try {
+      console.log(`Executing Dune query ${queryId}...`);
+      
+      const executeResponse: AxiosResponse<DuneExecuteResponse> = await axios.post(
+        `${this.baseUrl}/query/${queryId}/execute`,
+        { query_parameters: parameters },
+        {
+          headers: {
+            'X-Dune-API-Key': this.apiKey,
+            'Content-Type': 'application/json'
+          },
+          timeout: this.timeout
+        }
+      );
+
+      return executeResponse.data.execution_id;
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      console.error('Dune query execution failed:', axiosError.response?.data || axiosError.message);
+      throw error;
+    }
   }
 
-  async getStatistics(queryId: number): Promise<AnalyzedTransaction[]> {
+  async getMultiSendTransactions(queryId: number, days: number): Promise<string[]> {
     // Input validation
     if (queryId <= 0) return [];
 
-    return await this.getPaginatedData<AnalyzedTransaction>(queryId);
+    try {
+      // execute query and get executionId
+      const executionId = await this.executeQuery(queryId, { pastPeriod: days });
+      // get data from executionId
+      const data = await this.getPaginatedData<DuneMultiSendTransaction>(executionId);
+      // parse data
+      return this.parseTx.parseMultiSendTransaction(data);
+    } catch (error) {
+      return [];
+    }
   }
 
-  async getSafeTransactions(queryId: number): Promise<string[]> {
-    // Input validation
-    if (queryId <= 0) return [];
-
-    const data = await this.getPaginatedData<DuneMultiSendTransaction>(queryId);
-
-    return this.parseTx.decodeSafeTransaction(data);
-  }
-
-  private async getPaginatedData<T>(queryId: number): Promise<T[]> {
+  private async getPaginatedData<T>(executionId: string): Promise<T[]> {
     const perPage = config.dataPerQuery;
     let currentPage = 1;
     let hasMoreData = true;
+    let url = '';
     const allPages: T[][] = [];
 
     try {
       while (hasMoreData) {
-        const data = await this.pollForResults<T>(queryId, perPage, (currentPage - 1) * perPage);
+        url = `${this.baseUrl}/execution/${executionId}/results?limit=${perPage}&offset=${(currentPage - 1) * perPage}`;
+        const data = await this.pollForResults<T>(url);
 
         // Early exit if no data returned
         if (!data || data.length === 0) {
@@ -115,13 +134,9 @@ export class DuneAnalytics {
   }
 
   private async pollForResults<T>(
-    queryId: number,
-    limit: number = 1000,
-    offset: number = 0,
+    url: string,
     maxAttempts: number = config.maxRetries,
   ): Promise<T[]> {
-
-    const url = `${this.baseUrl}/query/${queryId}/results?limit=${limit}&offset=${offset}`;
 
     console.log(`Query for ${url} started....`);
 
