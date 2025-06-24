@@ -39,26 +39,22 @@ export class ParseTransaction {
     ]);
   }
 
-  decodeSafeTransaction(rawData: DuneMultiSendTransaction[]): string[] {
+  parseMultiSendTransaction(rawData: DuneMultiSendTransaction[]): string[] {
     // Input validation
     if (!Array.isArray(rawData) || rawData.length === 0) {
       return [];
     }
 
-    try {
-      return rawData.reduce((result: string[], tx) => {
-        result.push(...this.decodeMultiSend(tx.data));
-        return result;
-      }, []);
-    } catch (error) {
-      throw new Error(`Failed to decode Safe transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    return rawData.reduce((result: string[], tx) => {
+      result.push(...this.decodeMultiSend(tx.data));
+      return result;
+    }, []);
   }
 
   /**
    * Decode multiSend transactions
    */
-  decodeMultiSend(data: Hex): string[] {
+  private decodeMultiSend(data: Hex): string[] {
     try {
       const decoded = decodeFunctionData({
         abi: this.multisendAbi,
@@ -69,7 +65,7 @@ export class ParseTransaction {
       }
 
       // Extract transactions from multi-send hex data
-      const transactionsData = this.parseMultiSendTransactions(decoded.args?.[0] as Hex || '0x');
+      const transactionsData = this.parse(decoded.args?.[0] as Hex || '0x');
 
       return transactionsData.map(tx => tx.to);
     } catch (error) {
@@ -81,7 +77,7 @@ export class ParseTransaction {
   /**
    * Parses the packed MultiSend transactions data
    */
-  private parseMultiSendTransactions(transactionsData: Hex): MultiSendTransaction[] {
+  private parse(transactionsData: Hex): MultiSendTransaction[] {
     const transactions: MultiSendTransaction[] = [];
     let offset = 0;
     const dataBytes = hexToBytes(transactionsData);

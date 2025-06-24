@@ -6,10 +6,12 @@ export interface ParsedTransaction {
   value: number;
 }
 
-export type AnalyzedTransaction = {
+export type AnalyzedInfo = {
   namespace: string;
-  tx_count: number;
-  total_gas: number;
+  tx_cnt: number;
+  gas: number;
+  to: string;
+  value: number;
 }
 
 // Types for MultiSend transaction structure
@@ -23,7 +25,8 @@ export interface MultiSendTransaction {
 
 export interface DuneMultiSendTransaction {
   to: string;
-  safeTxGas: number;
+  gas: number;
+  value: number;
   data: Hex;
 }
 
